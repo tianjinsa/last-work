@@ -45,21 +45,17 @@ const router = createRouter({
   routes
 })
 
-// 标记是否已验证过 token
-let tokenVerified = false
-
 router.beforeEach(async (to, from, next) => {
   const userStore = useUserStore()
   
   // 如果用户看起来已登录，但还没验证过 token，先验证
-  if (userStore.isLoggedIn && !tokenVerified && to.meta.requiresAuth) {
+  if (userStore.isLoggedIn && !userStore.tokenVerified && to.meta.requiresAuth) {
     try {
       await api.getMe()
-      tokenVerified = true
+      userStore.tokenVerified = true
     } catch (e) {
       // token 无效，清除登录状态
-      userStore.logout()
-      tokenVerified = false
+      await userStore.logout()
       next('/login')
       return
     }

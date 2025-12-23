@@ -1,13 +1,21 @@
 <template>
-  <div class="app-container">
-    <el-config-provider :locale="zhCn">
-      <router-view />
-    </el-config-provider>
-  </div>
+  <n-config-provider :locale="zhCN" :date-locale="dateZhCN" :theme="darkTheme">
+    <n-message-provider>
+      <n-dialog-provider>
+        <n-notification-provider>
+          <n-loading-bar-provider>
+            <div class="app-container">
+              <router-view />
+            </div>
+          </n-loading-bar-provider>
+        </n-notification-provider>
+      </n-dialog-provider>
+    </n-message-provider>
+  </n-config-provider>
 </template>
 
 <script setup>
-import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
+import { zhCN, dateZhCN, darkTheme } from 'naive-ui'
 </script>
 
 <style>

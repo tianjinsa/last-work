@@ -1,67 +1,89 @@
 <template>
   <div class="login-container">
-    <el-card class="login-card">
+    <n-card class="login-card">
       <template #header>
         <div class="card-header">
           <h2>基于产生式知识表示的专家系统</h2>
         </div>
       </template>
       
-      <el-tabs v-model="activeTab">
-        <el-tab-pane label="登录" name="login">
-          <el-form :model="loginForm" :rules="rules" ref="loginFormRef" @submit.prevent="handleLogin">
-            <el-form-item prop="username">
-              <el-input v-model="loginForm.username" placeholder="用户名" prefix-icon="User" />
-            </el-form-item>
-            <el-form-item prop="password">
-              <el-input v-model="loginForm.password" placeholder="密码" type="password" 
-                        prefix-icon="Lock" show-password @keyup.enter="handleLogin" />
-            </el-form-item>
-            <el-form-item>
-              <el-button type="primary" @click="handleLogin" :loading="loading" style="width: 100%">
+      <n-tabs v-model:value="activeTab" type="line" animated>
+        <n-tab-pane name="login" tab="登录">
+          <n-form :model="loginForm" :rules="rules" ref="loginFormRef">
+            <n-form-item path="username" label="用户名">
+              <n-input v-model:value="loginForm.username" placeholder="用户名">
+                <template #prefix>
+                  <n-icon :component="PersonOutline" />
+                </template>
+              </n-input>
+            </n-form-item>
+            <n-form-item path="password" label="密码">
+              <n-input v-model:value="loginForm.password" placeholder="密码" type="password" 
+                        show-password-on="click" @keyup.enter="handleLogin">
+                <template #prefix>
+                  <n-icon :component="LockClosedOutline" />
+                </template>
+              </n-input>
+            </n-form-item>
+            <n-form-item>
+              <n-button type="primary" @click="handleLogin" :loading="loading" style="width: 100%">
                 登录
-              </el-button>
-            </el-form-item>
-          </el-form>
-        </el-tab-pane>
+              </n-button>
+            </n-form-item>
+          </n-form>
+        </n-tab-pane>
         
-        <el-tab-pane label="注册" name="register">
-          <el-form :model="registerForm" :rules="registerRules" ref="registerFormRef" @submit.prevent="handleRegister">
-            <el-form-item prop="username">
-              <el-input v-model="registerForm.username" placeholder="用户名" prefix-icon="User" />
-            </el-form-item>
-            <el-form-item prop="password">
-              <el-input v-model="registerForm.password" placeholder="密码" type="password" 
-                        prefix-icon="Lock" show-password />
-            </el-form-item>
-            <el-form-item prop="confirmPassword">
-              <el-input v-model="registerForm.confirmPassword" placeholder="确认密码" type="password" 
-                        prefix-icon="Lock" show-password @keyup.enter="handleRegister" />
-            </el-form-item>
-            <el-form-item>
-              <el-button type="primary" @click="handleRegister" :loading="loading" style="width: 100%">
+        <n-tab-pane name="register" tab="注册">
+          <n-form :model="registerForm" :rules="registerRules" ref="registerFormRef">
+            <n-form-item path="username" label="用户名">
+              <n-input v-model:value="registerForm.username" placeholder="用户名">
+                <template #prefix>
+                  <n-icon :component="PersonOutline" />
+                </template>
+              </n-input>
+            </n-form-item>
+            <n-form-item path="password" label="密码">
+              <n-input v-model:value="registerForm.password" placeholder="密码" type="password" 
+                        show-password-on="click">
+                <template #prefix>
+                  <n-icon :component="LockClosedOutline" />
+                </template>
+              </n-input>
+            </n-form-item>
+            <n-form-item path="confirmPassword" label="确认密码">
+              <n-input v-model:value="registerForm.confirmPassword" placeholder="确认密码" type="password" 
+                        show-password-on="click" @keyup.enter="handleRegister">
+                <template #prefix>
+                  <n-icon :component="LockClosedOutline" />
+                </template>
+              </n-input>
+            </n-form-item>
+            <n-form-item>
+              <n-button type="primary" @click="handleRegister" :loading="loading" style="width: 100%">
                 注册
-              </el-button>
-            </el-form-item>
-          </el-form>
-        </el-tab-pane>
-      </el-tabs>
+              </n-button>
+            </n-form-item>
+          </n-form>
+        </n-tab-pane>
+      </n-tabs>
       
       <div class="tips">
         <p>默认管理员账号：admin / admin123</p>
       </div>
-    </el-card>
+    </n-card>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { useMessage } from 'naive-ui'
+import { PersonOutline, LockClosedOutline } from '@vicons/ionicons5'
 import { useUserStore } from '../stores/user'
 
 const router = useRouter()
 const userStore = useUserStore()
+const message = useMessage()
 
 const activeTab = ref('login')
 const loading = ref(false)
@@ -85,12 +107,11 @@ const rules = {
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
 }
 
-const validateConfirmPassword = (rule, value, callback) => {
+const validateConfirmPassword = (rule, value) => {
   if (value !== registerForm.password) {
-    callback(new Error('两次输入的密码不一致'))
-  } else {
-    callback()
+    return new Error('两次输入的密码不一致')
   }
+  return true
 }
 
 const registerRules = {
@@ -108,42 +129,44 @@ const registerRules = {
   ]
 }
 
-async function handleLogin() {
-  if (!loginFormRef.value) return
-  
-  await loginFormRef.value.validate(async (valid) => {
-    if (!valid) return
-    
-    loading.value = true
-    try {
-      await userStore.login(loginForm.username, loginForm.password)
-      ElMessage.success('登录成功')
-      router.push('/')
-    } catch (error) {
-      ElMessage.error(error.error || '登录失败')
-    } finally {
-      loading.value = false
+const handleLogin = (e) => {
+  e?.preventDefault()
+  loginFormRef.value?.validate((errors) => {
+    if (!errors) {
+      loading.value = true
+      userStore.login(loginForm.username, loginForm.password)
+        .then(() => {
+          message.success('登录成功')
+          router.push('/')
+        })
+        .catch((error) => {
+          message.error(error.error || '登录失败')
+        })
+        .finally(() => {
+          loading.value = false
+        })
     }
   })
 }
 
-async function handleRegister() {
-  if (!registerFormRef.value) return
-  
-  await registerFormRef.value.validate(async (valid) => {
-    if (!valid) return
-    
-    loading.value = true
-    try {
-      await userStore.register(registerForm.username, registerForm.password)
-      ElMessage.success('注册成功，请登录')
-      activeTab.value = 'login'
-      loginForm.username = registerForm.username
-      loginForm.password = ''
-    } catch (error) {
-      ElMessage.error(error.error || '注册失败')
-    } finally {
-      loading.value = false
+const handleRegister = (e) => {
+  e?.preventDefault()
+  registerFormRef.value?.validate((errors) => {
+    if (!errors) {
+      loading.value = true
+      userStore.register(registerForm.username, registerForm.password)
+        .then(() => {
+          message.success('注册成功，请登录')
+          activeTab.value = 'login'
+          loginForm.username = registerForm.username
+          loginForm.password = ''
+        })
+        .catch((error) => {
+          message.error(error.error || '注册失败')
+        })
+        .finally(() => {
+          loading.value = false
+        })
     }
   })
 }
@@ -155,13 +178,10 @@ async function handleRegister() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, var(--el-bg-color) 0%, var(--el-bg-color-page) 100%);
 }
 
 .login-card {
   width: 400px;
-  background: var(--el-bg-color-overlay);
-  border: 1px solid var(--el-border-color);
 }
 
 .card-header {
@@ -170,14 +190,13 @@ async function handleRegister() {
 
 .card-header h2 {
   margin: 0;
-  color: var(--el-text-color-primary);
   font-size: 1.5rem;
 }
 
 .tips {
   margin-top: 20px;
   text-align: center;
-  color: var(--el-text-color-secondary);
+  opacity: 0.8;
   font-size: 12px;
 }
 </style>

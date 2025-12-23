@@ -1,216 +1,154 @@
 <template>
   <div class="admin-view">
-    <el-tabs v-model="activeTab">
+    <n-tabs v-model:value="activeTab" type="line" animated>
       <!-- 规则管理 -->
-      <el-tab-pane label="规则管理" name="rules">
-        <el-card class="panel-card">
-          <template #header>
-            <div class="card-header">
-              <span>知识库规则管理</span>
-              <div class="header-actions">
-                <el-button type="primary" size="small" @click="openAddRuleDialog">
-                  <el-icon><Plus /></el-icon>
-                  添加规则
-                </el-button>
-                <el-button size="small" @click="openBatchAddDialog">
-                  <el-icon><DocumentAdd /></el-icon>
-                  批量添加
-                </el-button>
-                <el-button type="danger" plain size="small" @click="handleResetRules">
-                  <el-icon><RefreshLeft /></el-icon>
-                  重置默认
-                </el-button>
-              </div>
+      <n-tab-pane name="rules" tab="规则管理">
+        <n-card class="panel-card" title="知识库规则管理">
+          <template #header-extra>
+            <div class="header-actions">
+              <n-button type="primary" size="small" @click="openAddRuleDialog">
+                <template #icon>
+                  <n-icon :component="AddOutline" />
+                </template>
+                添加规则
+              </n-button>
+              <n-button size="small" @click="openBatchAddDialog">
+                <template #icon>
+                  <n-icon :component="DocumentTextOutline" />
+                </template>
+                批量添加
+              </n-button>
+              <n-button type="error" ghost size="small" @click="handleResetRules">
+                <template #icon>
+                  <n-icon :component="RefreshOutline" />
+                </template>
+                重置默认
+              </n-button>
             </div>
           </template>
           
-          <el-table :data="rules" stripe v-loading="rulesLoading">
-            <el-table-column prop="id" label="ID" width="80" />
-            <el-table-column prop="premises" label="前提条件">
-              <template #default="scope">
-                <el-tag v-for="p in scope.row.premises" :key="p" size="small" style="margin: 2px;">
-                  {{ p }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column label="→" width="50" align="center">
-              <template #default>
-                <el-icon><Right /></el-icon>
-              </template>
-            </el-table-column>
-            <el-table-column prop="conclusion" label="结论" width="150" />
-            <el-table-column label="操作" width="150" fixed="right">
-              <template #default="scope">
-                <el-button type="primary" link size="small" @click="editRule(scope.row)">
-                  编辑
-                </el-button>
-                <el-button type="danger" link size="small" @click="deleteRule(scope.row)">
-                  删除
-                </el-button>
-              </template>
-            </el-table-column>
-          </el-table>
-        </el-card>
-      </el-tab-pane>
+          <n-data-table
+            :columns="rulesColumns"
+            :data="rules"
+            :loading="rulesLoading"
+            :pagination="{ pageSize: 10 }"
+          />
+        </n-card>
+      </n-tab-pane>
       
       <!-- 用户管理 -->
-      <el-tab-pane label="用户管理" name="users">
-        <el-card class="panel-card">
-          <template #header>
-            <div class="card-header">
-              <span>用户管理</span>
-              <el-button type="primary" size="small" @click="loadUsers">
-                <el-icon><Refresh /></el-icon>
-                刷新
-              </el-button>
-            </div>
+      <n-tab-pane name="users" tab="用户管理">
+        <n-card class="panel-card" title="用户管理">
+          <template #header-extra>
+            <n-button type="primary" size="small" @click="loadUsers">
+              <template #icon>
+                <n-icon :component="RefreshOutline" />
+              </template>
+              刷新
+            </n-button>
           </template>
           
-          <el-table :data="users" stripe v-loading="usersLoading">
-            <el-table-column prop="username" label="用户名" width="200" />
-            <el-table-column prop="role" label="角色" width="150">
-              <template #default="scope">
-                <el-tag :type="scope.row.role === 'admin' ? 'danger' : 'info'">
-                  {{ scope.row.role === 'admin' ? '管理员' : '普通用户' }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="created_at" label="创建时间">
-              <template #default="scope">
-                {{ formatTime(scope.row.created_at) }}
-              </template>
-            </el-table-column>
-            <el-table-column label="操作" width="200" fixed="right">
-              <template #default="scope">
-                <el-button 
-                  v-if="scope.row.role !== 'admin'" 
-                  type="warning" 
-                  link 
-                  size="small" 
-                  @click="promoteUser(scope.row)"
-                >
-                  升为管理员
-                </el-button>
-                <el-button 
-                  v-if="scope.row.role === 'admin' && scope.row.username !== 'admin'" 
-                  type="info" 
-                  link 
-                  size="small" 
-                  @click="demoteUser(scope.row)"
-                >
-                  降为用户
-                </el-button>
-                <el-button 
-                  v-if="scope.row.username !== 'admin'"
-                  type="danger" 
-                  link 
-                  size="small" 
-                  @click="deleteUser(scope.row)"
-                >
-                  删除
-                </el-button>
-              </template>
-            </el-table-column>
-          </el-table>
-        </el-card>
-      </el-tab-pane>
+          <n-data-table
+            :columns="usersColumns"
+            :data="users"
+            :loading="usersLoading"
+            :pagination="{ pageSize: 10 }"
+          />
+        </n-card>
+      </n-tab-pane>
       
       <!-- 系统历史 -->
-      <el-tab-pane label="全部历史" name="history">
-        <el-card class="panel-card">
-          <template #header>
-            <div class="card-header">
-              <span>系统推理历史（所有用户）</span>
-              <div class="header-actions">
-                <el-button type="danger" plain size="small" @click="handleClearAllHistory">
-                  <el-icon><Delete /></el-icon>
-                  清空全部
-                </el-button>
-                <el-button type="primary" size="small" @click="loadAllHistory">
-                  <el-icon><Refresh /></el-icon>
-                  刷新
-                </el-button>
-              </div>
+      <n-tab-pane name="history" tab="全部历史">
+        <n-card class="panel-card" title="系统推理历史（所有用户）">
+          <template #header-extra>
+            <div class="header-actions">
+              <n-button type="error" ghost size="small" @click="handleClearAllHistory">
+                <template #icon>
+                  <n-icon :component="TrashOutline" />
+                </template>
+                清空全部
+              </n-button>
+              <n-button type="primary" size="small" @click="loadAllHistory">
+                <template #icon>
+                  <n-icon :component="RefreshOutline" />
+                </template>
+                刷新
+              </n-button>
             </div>
           </template>
           
-          <el-table :data="allHistory" stripe v-loading="historyLoading">
-            <el-table-column prop="timestamp" label="时间" width="180">
-              <template #default="scope">
-                {{ formatTime(scope.row.timestamp) }}
-              </template>
-            </el-table-column>
-            <el-table-column prop="username" label="用户" width="120" />
-            <el-table-column prop="type" label="类型" width="100">
-              <template #default="scope">
-                <el-tag :type="scope.row.type === 'forward' ? 'success' : 'primary'" size="small">
-                  {{ scope.row.type === 'forward' ? '正向' : '反向' }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="conclusion" label="结论" />
-            <el-table-column label="事实数" width="80">
-              <template #default="scope">
-                {{ scope.row.facts?.length || 0 }}
-              </template>
-            </el-table-column>
-          </el-table>
-          
-          <el-pagination
-            v-model:current-page="historyPage"
-            :page-size="20"
-            :total="historyTotal"
-            layout="prev, pager, next"
-            @current-change="loadAllHistory"
-            style="margin-top: 15px; justify-content: flex-end;"
+          <n-data-table
+            :columns="historyColumns"
+            :data="allHistory"
+            :loading="historyLoading"
+            :pagination="historyPagination"
+            @update:page="handleHistoryPageChange"
           />
-        </el-card>
-      </el-tab-pane>
-    </el-tabs>
+        </n-card>
+      </n-tab-pane>
+    </n-tabs>
     
     <!-- 添加/编辑规则对话框 -->
-    <el-dialog v-model="ruleDialogVisible" :title="editingRule ? '编辑规则' : '添加规则'" width="500px">
-      <el-form :model="ruleForm" label-width="80px">
-        <el-form-item label="前提条件">
-          <el-input v-model="ruleForm.premises" placeholder="用逗号分隔，如：会飞,下蛋" />
-        </el-form-item>
-        <el-form-item label="结论">
-          <el-input v-model="ruleForm.conclusion" placeholder="结论" />
-        </el-form-item>
-      </el-form>
-      
-      <template #footer>
-        <el-button @click="ruleDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="saveRule" :loading="saving">保存</el-button>
-      </template>
-    </el-dialog>
+    <n-modal v-model:show="ruleDialogVisible">
+      <n-card style="width: 500px" :title="editingRule ? '编辑规则' : '添加规则'" :bordered="false" size="huge" role="dialog" aria-modal="true">
+        <n-form :model="ruleForm" label-placement="left" label-width="80">
+          <n-form-item label="前提条件">
+            <n-input v-model:value="ruleForm.premises" placeholder="用逗号分隔，如：会飞,下蛋" />
+          </n-form-item>
+          <n-form-item label="结论">
+            <n-input v-model:value="ruleForm.conclusion" placeholder="结论" />
+          </n-form-item>
+        </n-form>
+        
+        <template #footer>
+          <div style="display: flex; justify-content: flex-end; gap: 10px;">
+            <n-button @click="ruleDialogVisible = false">取消</n-button>
+            <n-button type="primary" @click="saveRule" :loading="saving">保存</n-button>
+          </div>
+        </template>
+      </n-card>
+    </n-modal>
     
     <!-- 批量添加对话框 -->
-    <el-dialog v-model="batchDialogVisible" title="批量添加规则" width="600px">
-      <p style="margin-bottom: 15px; color: #666;">
-        每行一条规则，格式：前提1, 前提2, ... = 结论<br>
-        例如：会飞, 下蛋 = 鸟
-      </p>
-      <el-input
-        v-model="batchText"
-        type="textarea"
-        :rows="10"
-        placeholder="会飞, 下蛋 = 鸟
+    <n-modal v-model:show="batchDialogVisible">
+      <n-card style="width: 600px" title="批量添加规则" :bordered="false" size="huge" role="dialog" aria-modal="true">
+        <p style="margin-bottom: 15px; opacity: 0.6;">
+          每行一条规则，格式：前提1, 前提2, ... = 结论<br>
+          例如：会飞, 下蛋 = 鸟
+        </p>
+        <n-input
+          v-model:value="batchText"
+          type="textarea"
+          :rows="10"
+          placeholder="会飞, 下蛋 = 鸟
 食肉, 有犬齿 = 哺乳动物"
-      />
-      
-      <template #footer>
-        <el-button @click="batchDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="batchAddRules" :loading="saving">添加</el-button>
-      </template>
-    </el-dialog>
+        />
+        
+        <template #footer>
+          <div style="display: flex; justify-content: flex-end; gap: 10px;">
+            <n-button @click="batchDialogVisible = false">取消</n-button>
+            <n-button type="primary" @click="batchAddRules" :loading="saving">添加</n-button>
+          </div>
+        </template>
+      </n-card>
+    </n-modal>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ref, onMounted, h, reactive, computed } from 'vue'
+import { useMessage, useDialog, NTag, NButton, NIcon } from 'naive-ui'
 import api from '../api'
+import {
+  AddOutline,
+  DocumentTextOutline,
+  RefreshOutline,
+  TrashOutline,
+  ArrowForwardOutline
+} from '@vicons/ionicons5'
+
+const message = useMessage()
+const dialog = useDialog()
 
 const activeTab = ref('rules')
 
@@ -222,6 +160,56 @@ const editingRule = ref(null)
 const ruleForm = ref({ premises: '', conclusion: '' })
 const saving = ref(false)
 
+const rulesColumns = [
+  { title: 'ID', key: 'id', width: 80 },
+  {
+    title: '前提条件',
+    key: 'premises',
+    render: (row) => {
+      return row.premises.map(p => h(NTag, { size: 'small', style: 'margin: 2px;' }, { default: () => p }))
+    }
+  },
+  {
+    title: '→',
+    key: 'arrow',
+    width: 50,
+    align: 'center',
+    render: () => h(NIcon, { component: ArrowForwardOutline })
+  },
+  { title: '结论', key: 'conclusion', width: 150 },
+  {
+    title: '操作',
+    key: 'actions',
+    width: 150,
+    fixed: 'right',
+    render: (row) => {
+      return [
+        h(
+          NButton,
+          {
+            text: true,
+            type: 'primary',
+            size: 'small',
+            onClick: () => editRule(row),
+            style: 'margin-right: 10px'
+          },
+          { default: () => '编辑' }
+        ),
+        h(
+          NButton,
+          {
+            text: true,
+            type: 'error',
+            size: 'small',
+            onClick: () => deleteRule(row)
+          },
+          { default: () => '删除' }
+        )
+      ]
+    }
+  }
+]
+
 // 批量添加
 const batchDialogVisible = ref(false)
 const batchText = ref('')
@@ -230,11 +218,122 @@ const batchText = ref('')
 const users = ref([])
 const usersLoading = ref(false)
 
+const usersColumns = [
+  { title: '用户名', key: 'username', width: 200 },
+  {
+    title: '角色',
+    key: 'role',
+    width: 150,
+    render: (row) => {
+      return h(
+        NTag,
+        { type: row.role === 'admin' ? 'error' : 'info' },
+        { default: () => (row.role === 'admin' ? '管理员' : '普通用户') }
+      )
+    }
+  },
+  {
+    title: '创建时间',
+    key: 'created_at',
+    render: (row) => formatTime(row.created_at)
+  },
+  {
+    title: '操作',
+    key: 'actions',
+    width: 200,
+    fixed: 'right',
+    render: (row) => {
+      const actions = []
+      if (row.role !== 'admin') {
+        actions.push(
+          h(
+            NButton,
+            {
+              text: true,
+              type: 'warning',
+              size: 'small',
+              onClick: () => promoteUser(row),
+              style: 'margin-right: 10px'
+            },
+            { default: () => '升为管理员' }
+          )
+        )
+      }
+      if (row.role === 'admin' && row.username !== 'admin') {
+        actions.push(
+          h(
+            NButton,
+            {
+              text: true,
+              type: 'info',
+              size: 'small',
+              onClick: () => demoteUser(row),
+              style: 'margin-right: 10px'
+            },
+            { default: () => '降为用户' }
+          )
+        )
+      }
+      if (row.username !== 'admin') {
+        actions.push(
+          h(
+            NButton,
+            {
+              text: true,
+              type: 'error',
+              size: 'small',
+              onClick: () => deleteUser(row)
+            },
+            { default: () => '删除' }
+          )
+        )
+      }
+      return actions
+    }
+  }
+]
+
 // 历史
 const allHistory = ref([])
 const historyLoading = ref(false)
-const historyPage = ref(1)
-const historyTotal = ref(0)
+const historyPagination = reactive({
+  page: 1,
+  pageSize: 20,
+  itemCount: 0,
+  onChange: (page) => {
+    historyPagination.page = page
+    loadAllHistory()
+  }
+})
+
+const historyColumns = [
+  {
+    title: '时间',
+    key: 'timestamp',
+    width: 180,
+    render: (row) => formatTime(row.timestamp)
+  },
+  { title: '用户', key: 'username', width: 120 },
+  {
+    title: '类型',
+    key: 'type',
+    width: 100,
+    render: (row) => {
+      return h(
+        NTag,
+        { type: row.type === 'forward' ? 'success' : 'info', size: 'small' },
+        { default: () => (row.type === 'forward' ? '正向' : '反向') }
+      )
+    }
+  },
+  { title: '结论', key: 'conclusion' },
+  {
+    title: '事实数',
+    key: 'facts',
+    width: 80,
+    render: (row) => row.facts?.length || 0
+  }
+]
 
 onMounted(() => {
   loadRules()
@@ -249,7 +348,7 @@ async function loadRules() {
     const res = await api.getRules()
     rules.value = res.rules || []
   } catch (e) {
-    ElMessage.error('加载规则失败')
+    message.error('加载规则失败')
   } finally {
     rulesLoading.value = false
   }
@@ -275,7 +374,7 @@ async function saveRule() {
   const conclusion = ruleForm.value.conclusion.trim()
   
   if (!premises.length || !conclusion) {
-    ElMessage.warning('前提和结论不能为空')
+    message.warning('前提和结论不能为空')
     return
   }
   
@@ -283,44 +382,54 @@ async function saveRule() {
   try {
     if (editingRule.value) {
       await api.updateRule(editingRule.value.id, premises, conclusion)
-      ElMessage.success('规则已更新')
+      message.success('规则已更新')
     } else {
       await api.addRule(premises, conclusion)
-      ElMessage.success('规则已添加')
+      message.success('规则已添加')
     }
     ruleDialogVisible.value = false
     loadRules()
   } catch (e) {
-    ElMessage.error(e.error || '保存失败')
+    message.error(e.error || '保存失败')
   } finally {
     saving.value = false
   }
 }
 
-async function deleteRule(rule) {
-  try {
-    await ElMessageBox.confirm(`确定要删除规则 ${rule.id} 吗？`, '确认删除', { type: 'warning' })
-    await api.deleteRule(rule.id)
-    ElMessage.success('删除成功')
-    loadRules()
-  } catch (e) {
-    if (e !== 'cancel') {
-      ElMessage.error(e.error || '删除失败')
+function deleteRule(rule) {
+  dialog.warning({
+    title: '确认删除',
+    content: `确定要删除规则 ${rule.id} 吗？`,
+    positiveText: '确定',
+    negativeText: '取消',
+    onPositiveClick: async () => {
+      try {
+        await api.deleteRule(rule.id)
+        message.success('删除成功')
+        loadRules()
+      } catch (e) {
+        message.error(e.error || '删除失败')
+      }
     }
-  }
+  })
 }
 
-async function handleResetRules() {
-  try {
-    await ElMessageBox.confirm('确定要重置为默认规则吗？这将清除所有修改。', '确认重置', { type: 'warning' })
-    await api.resetRules()
-    ElMessage.success('规则已重置')
-    loadRules()
-  } catch (e) {
-    if (e !== 'cancel') {
-      ElMessage.error(e.error || '重置失败')
+function handleResetRules() {
+  dialog.warning({
+    title: '确认重置',
+    content: '确定要重置为默认规则吗？这将清除所有修改。',
+    positiveText: '确定',
+    negativeText: '取消',
+    onPositiveClick: async () => {
+      try {
+        await api.resetRules()
+        message.success('规则已重置')
+        loadRules()
+      } catch (e) {
+        message.error(e.error || '重置失败')
+      }
     }
-  }
+  })
 }
 
 function openBatchAddDialog() {
@@ -348,18 +457,18 @@ async function batchAddRules() {
   }
   
   if (!newRules.length) {
-    ElMessage.warning('没有有效的规则')
+    message.warning('没有有效的规则')
     return
   }
   
   saving.value = true
   try {
     await api.batchAddRules(newRules)
-    ElMessage.success(`成功添加 ${newRules.length} 条规则`)
+    message.success(`成功添加 ${newRules.length} 条规则`)
     batchDialogVisible.value = false
     loadRules()
   } catch (e) {
-    ElMessage.error(e.error || '添加失败')
+    message.error(e.error || '添加失败')
   } finally {
     saving.value = false
   }
@@ -372,76 +481,101 @@ async function loadUsers() {
     const res = await api.getUsers()
     users.value = res.users || []
   } catch (e) {
-    ElMessage.error('加载用户失败')
+    message.error('加载用户失败')
   } finally {
     usersLoading.value = false
   }
 }
 
-async function promoteUser(user) {
-  try {
-    await ElMessageBox.confirm(`确定要将 ${user.username} 升级为管理员吗？`, '确认', { type: 'warning' })
-    await api.updateUserRole(user.username, 'admin')
-    ElMessage.success('已升级为管理员')
-    loadUsers()
-  } catch (e) {
-    if (e !== 'cancel') {
-      ElMessage.error(e.error || '操作失败')
+function promoteUser(user) {
+  dialog.warning({
+    title: '确认',
+    content: `确定要将 ${user.username} 升级为管理员吗？`,
+    positiveText: '确定',
+    negativeText: '取消',
+    onPositiveClick: async () => {
+      try {
+        await api.updateUserRole(user.username, 'admin')
+        message.success('已升级为管理员')
+        loadUsers()
+      } catch (e) {
+        message.error(e.error || '操作失败')
+      }
     }
-  }
+  })
 }
 
-async function demoteUser(user) {
-  try {
-    await ElMessageBox.confirm(`确定要将 ${user.username} 降级为普通用户吗？`, '确认', { type: 'warning' })
-    await api.updateUserRole(user.username, 'user')
-    ElMessage.success('已降级为普通用户')
-    loadUsers()
-  } catch (e) {
-    if (e !== 'cancel') {
-      ElMessage.error(e.error || '操作失败')
+function demoteUser(user) {
+  dialog.warning({
+    title: '确认',
+    content: `确定要将 ${user.username} 降级为普通用户吗？`,
+    positiveText: '确定',
+    negativeText: '取消',
+    onPositiveClick: async () => {
+      try {
+        await api.updateUserRole(user.username, 'user')
+        message.success('已降级为普通用户')
+        loadUsers()
+      } catch (e) {
+        message.error(e.error || '操作失败')
+      }
     }
-  }
+  })
 }
 
-async function deleteUser(user) {
-  try {
-    await ElMessageBox.confirm(`确定要删除用户 ${user.username} 吗？`, '确认删除', { type: 'warning' })
-    await api.deleteUser(user.username)
-    ElMessage.success('用户已删除')
-    loadUsers()
-  } catch (e) {
-    if (e !== 'cancel') {
-      ElMessage.error(e.error || '删除失败')
+function deleteUser(user) {
+  dialog.warning({
+    title: '确认删除',
+    content: `确定要删除用户 ${user.username} 吗？`,
+    positiveText: '确定',
+    negativeText: '取消',
+    onPositiveClick: async () => {
+      try {
+        await api.deleteUser(user.username)
+        message.success('用户已删除')
+        loadUsers()
+      } catch (e) {
+        message.error(e.error || '删除失败')
+      }
     }
-  }
+  })
 }
 
 // 历史管理方法
 async function loadAllHistory() {
   historyLoading.value = true
   try {
-    const res = await api.getHistory(historyPage.value, 20)
+    const res = await api.getHistory(historyPagination.page, 20)
     allHistory.value = res.history || []
-    historyTotal.value = res.total || 0
+    historyPagination.itemCount = res.total || 0
   } catch (e) {
-    ElMessage.error('加载历史失败')
+    message.error('加载历史失败')
   } finally {
     historyLoading.value = false
   }
 }
 
-async function handleClearAllHistory() {
-  try {
-    await ElMessageBox.confirm('确定要清空所有用户的历史记录吗？', '确认清空', { type: 'warning' })
-    await api.clearHistory()
-    ElMessage.success('历史已清空')
-    loadAllHistory()
-  } catch (e) {
-    if (e !== 'cancel') {
-      ElMessage.error(e.error || '清空失败')
+function handleHistoryPageChange(page) {
+  historyPagination.page = page
+  loadAllHistory()
+}
+
+function handleClearAllHistory() {
+  dialog.warning({
+    title: '确认清空',
+    content: '确定要清空所有用户的历史记录吗？',
+    positiveText: '确定',
+    negativeText: '取消',
+    onPositiveClick: async () => {
+      try {
+        await api.clearHistory()
+        message.success('历史已清空')
+        loadAllHistory()
+      } catch (e) {
+        message.error(e.error || '清空失败')
+      }
     }
-  }
+  })
 }
 
 function formatTime(timestamp) {
@@ -456,28 +590,8 @@ function formatTime(timestamp) {
   margin: 0 auto;
 }
 
-.panel-card {
-  background: var(--el-bg-color-overlay);
-  border-color: var(--el-border-color);
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
 .header-actions {
   display: flex;
   gap: 10px;
-}
-
-/* 表格样式 - 减小条纹对比度 */
-:deep(.el-table) {
-  --el-table-row-hover-bg-color: var(--el-fill-color-light);
-}
-
-:deep(.el-table--striped .el-table__body tr.el-table__row--striped td.el-table__cell) {
-  background: var(--el-fill-color-lighter);
 }
 </style>

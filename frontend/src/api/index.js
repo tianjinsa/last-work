@@ -1,6 +1,8 @@
 import axios from 'axios'
-import { ElMessage } from 'element-plus'
+import { createDiscreteApi } from 'naive-ui'
 import router from '../router'
+
+const { message } = createDiscreteApi(['message'])
 
 const instance = axios.create({
   baseURL: '/api',
@@ -33,7 +35,7 @@ instance.interceptors.response.use(
         localStorage.removeItem('username')
         localStorage.removeItem('role')
         // 提示用户
-        ElMessage.warning('登录已过期，请重新登录')
+        message.warning('登录已过期，请重新登录')
         // 跳转到登录页
         if (router.currentRoute.value.path !== '/login') {
           router.push('/login')

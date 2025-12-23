@@ -6,6 +6,7 @@ export const useUserStore = defineStore('user', () => {
   const token = ref(localStorage.getItem('token') || '')
   const username = ref(localStorage.getItem('username') || '')
   const role = ref(localStorage.getItem('role') || '')
+  const tokenVerified = ref(false)
 
   const isLoggedIn = computed(() => !!token.value)
   const isAdmin = computed(() => role.value === 'admin')
@@ -15,6 +16,7 @@ export const useUserStore = defineStore('user', () => {
     token.value = res.token
     username.value = res.username
     role.value = res.role
+    tokenVerified.value = true
     
     localStorage.setItem('token', res.token)
     localStorage.setItem('username', res.username)
@@ -41,6 +43,7 @@ export const useUserStore = defineStore('user', () => {
     token.value = ''
     username.value = ''
     role.value = ''
+    tokenVerified.value = false
     
     localStorage.removeItem('token')
     localStorage.removeItem('username')
