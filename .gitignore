@@ -1,0 +1,58 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+.eggs/
+*.so
+*.pyd
+.*/
+
+# PyInstaller
+*.spec
+dist/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment
+.env
+.env.local
+
+# C++ Build
+build/
+
+# Node.js / Vue
+node_modules/
+web_frontend/dist/
+.pnpm-store/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# ����ʱ���ɵ������ļ�
+users.json
+inference_history.json
+
+# ϵͳ�ļ�
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ѹ����
+*.rar
+*.zip
+*.7z
+*.tar.gz
+
+# ��ʱ�ļ�
+*.tmp
+*.temp
+*.bak
