@@ -33,6 +33,16 @@ export default defineConfig({
     }
   },
   build: {
-    outDir: 'dist'
+    outDir: 'dist',
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'naive-ui': ['naive-ui'],
+          'vis-network': ['vis-network'],
+          'vicons': ['@vicons/ionicons5']
+        }
+      }
+    }
   }
 })
