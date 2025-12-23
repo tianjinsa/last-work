@@ -20,19 +20,29 @@ instance.interceptors.request.use(
 )
 
 // 响应拦截器
+let isRelogging = false
+
 instance.interceptors.response.use(
   response => response.data,
   error => {
     if (error.response?.status === 401) {
-      // 清除本地存储的登录信息
-      localStorage.removeItem('token')
-      localStorage.removeItem('username')
-      localStorage.removeItem('role')
-      // 提示用户
-      ElMessage.warning('登录已过期，请重新登录')
-      // 跳转到登录页
-      if (router.currentRoute.value.path !== '/login') {
-        router.push('/login')
+      if (!isRelogging) {
+        isRelogging = true
+        // 清除本地存储的登录信息
+        localStorage.removeItem('token')
+        localStorage.removeItem('username')
+        localStorage.removeItem('role')
+        // 提示用户
+        ElMessage.warning('登录已过期，请重新登录')
+        // 跳转到登录页
+        if (router.currentRoute.value.path !== '/login') {
+          router.push('/login')
+        }
+        
+        // 3秒后重置标志，防止短时间内重复提示
+        setTimeout(() => {
+          isRelogging = false
+        }, 3000)
       }
     }
     return Promise.reject(error.response?.data || error)

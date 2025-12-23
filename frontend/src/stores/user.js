@@ -28,11 +28,16 @@ export const useUserStore = defineStore('user', () => {
   }
 
   async function logout() {
-    try {
-      await api.logout()
-    } catch (e) {
-      // 忽略错误
+    // 只有当本地有 token 时才调用注销接口
+    // 如果 token 已经被拦截器清除（比如 401 过期），就不需要再调用接口了
+    if (localStorage.getItem('token')) {
+      try {
+        await api.logout()
+      } catch (e) {
+        // 忽略错误
+      }
     }
+    
     token.value = ''
     username.value = ''
     role.value = ''
