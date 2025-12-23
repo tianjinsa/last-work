@@ -1,13 +1,11 @@
 # Python
 __pycache__/
-*.py[cod]
 *$py.class
 *.egg-info/
 *.egg
 .eggs/
 *.so
-*.pyd
-
+dist/
 # 虚拟环境
 .venv/
 venv/
