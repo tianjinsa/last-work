@@ -548,6 +548,9 @@ def get_history():
     if role != "admin":
         history = [h for h in history if h.get("username") == username]
 
+    # 按时间倒序排列（最新的在前）
+    history.reverse()
+
     page = request.args.get("page", 1, type=int)
     per_page = request.args.get("per_page", 20, type=int)
     total = len(history)
@@ -556,7 +559,7 @@ def get_history():
 
     return jsonify(
         {
-            "history": list(reversed(history[start:end])),
+            "history": history[start:end],
             "total": total,
             "page": page,
             "per_page": per_page,

@@ -1,6 +1,6 @@
 <template>
   <div class="history-view">
-    <n-card class="main-card" title="推理历史记录">
+    <n-card class="main-card" title="推理历史记录" content-style="padding: 0; display: flex; flex-direction: column; height: 100%;">
       <template #header-extra>
         <div class="header-actions">
           <n-button type="error" ghost size="small" @click="handleClearHistory">
@@ -18,14 +18,68 @@
         </div>
       </template>
       
-      <n-data-table
-        :columns="columns"
-        :data="historyList"
-        :loading="loading"
-        :pagination="pagination"
-        @update:page="handlePageChange"
-        @update:page-size="handlePageSizeChange"
-      />
+      <div class="history-list-container">
+        <n-scrollbar>
+          <n-spin :show="loading">
+            <n-collapse arrow-placement="right" accordion style="padding: 12px 24px;">
+              <n-collapse-item v-for="item in historyList" :key="item.id" :name="item.id">
+                <template #header>
+                  <div class="item-header">
+                    <span class="item-time">{{ formatTime(item.timestamp) }}</span>
+                    <n-tag :type="item.type === 'forward' ? 'success' : 'info'" size="small" round>
+                      {{ item.type === 'forward' ? '正向' : '反向' }}
+                    </n-tag>
+                    <span class="item-conclusion">{{ item.conclusion || '无结论' }}</span>
+                  </div>
+                </template>
+                <template #header-extra>
+                  <n-space>
+                    <n-button text type="primary" size="small" @click.stop="viewDetail(item)">详情</n-button>
+                    <n-button text type="error" size="small" @click.stop="deleteRecord(item)">删除</n-button>
+                  </n-space>
+                </template>
+                
+                <div class="item-content">
+                  <div class="content-section">
+                    <strong>已知事实：</strong>
+                    <n-space :size="4" style="margin-top: 8px">
+                      <n-tag v-for="fact in item.facts" :key="fact" size="small" type="success">{{ fact }}</n-tag>
+                      <span v-if="!item.facts?.length" class="no-data">无</span>
+                    </n-space>
+                  </div>
+                  <div class="content-section" style="margin-top: 12px">
+                    <strong>推理路径：</strong>
+                    <div class="path-display" style="margin-top: 8px">
+                      <template v-if="item.path?.length">
+                        <template v-for="(ruleId, index) in item.path" :key="index">
+                          <n-tag type="primary" size="small">规则 {{ ruleId }}</n-tag>
+                          <n-icon v-if="index < item.path.length - 1" :component="ArrowForwardOutline" style="margin: 0 4px; vertical-align: middle;" />
+                        </template>
+                      </template>
+                      <span v-else class="no-data">无</span>
+                    </div>
+                  </div>
+                </div>
+              </n-collapse-item>
+            </n-collapse>
+            <n-empty v-if="!loading && historyList.length === 0" description="暂无历史记录" style="padding: 40px 0" />
+          </n-spin>
+        </n-scrollbar>
+      </div>
+
+      <template #footer>
+        <div class="pagination-container">
+          <n-pagination
+            v-model:page="pagination.page"
+            v-model:page-size="pagination.pageSize"
+            :item-count="pagination.itemCount"
+            :page-sizes="[10, 20, 50, 100]"
+            show-size-picker
+            @update:page="pagination.onChange"
+            @update:page-size="pagination.onUpdatePageSize"
+          />
+        </div>
+      </template>
     </n-card>
     
     <!-- 详情对话框 -->
@@ -88,9 +142,9 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, h, reactive } from 'vue'
+import { ref, computed, onMounted, reactive } from 'vue'
 import { useRouter } from 'vue-router'
-import { useMessage, useDialog, NTag, NButton, NIcon } from 'naive-ui'
+import { useMessage, useDialog } from 'naive-ui'
 import { useUserStore } from '../stores/user'
 import api from '../api'
 import {
@@ -108,13 +162,10 @@ const isAdmin = computed(() => userStore.isAdmin)
 
 const loading = ref(false)
 const historyList = ref([])
-const total = ref(0)
 
 const pagination = reactive({
   page: 1,
   pageSize: 20,
-  showSizePicker: true,
-  pageSizes: [10, 20, 50, 100],
   itemCount: 0,
   onChange: (page) => {
     pagination.page = page
@@ -129,103 +180,6 @@ const pagination = reactive({
 
 const detailDialogVisible = ref(false)
 const selectedRecord = ref(null)
-
-const columns = computed(() => {
-  const cols = [
-    {
-      type: 'expand',
-      renderExpand: (row) => {
-        return h('div', { class: 'expand-content' }, [
-          h('div', { class: 'expand-section' }, [
-            h('strong', '已知事实：'),
-            row.facts.map(fact => h(NTag, { size: 'small', type: 'success', style: 'margin: 2px;' }, { default: () => fact }))
-          ]),
-          h('div', { class: 'expand-section' }, [
-            h('strong', '推理路径：'),
-            row.path?.length 
-              ? h('span', `规则 ${row.path.join(' → ')}`)
-              : h('span', { class: 'no-data' }, '无')
-          ])
-        ])
-      }
-    },
-    {
-      title: '时间',
-      key: 'timestamp',
-      width: 180,
-      render: (row) => formatTime(row.timestamp)
-    }
-  ]
-
-  if (isAdmin.value) {
-    cols.push({
-      title: '用户',
-      key: 'username',
-      width: 120
-    })
-  }
-
-  cols.push(
-    {
-      title: '推理类型',
-      key: 'type',
-      width: 120,
-      render: (row) => {
-        return h(
-          NTag,
-          { type: row.type === 'forward' ? 'success' : 'info' },
-          { default: () => (row.type === 'forward' ? '正向推理' : '反向推理') }
-        )
-      }
-    },
-    {
-      title: '结论',
-      key: 'conclusion',
-      render: (row) => {
-        return h('span', { class: 'conclusion-text' }, row.conclusion || '无结论')
-      }
-    },
-    {
-      title: '事实数',
-      key: 'facts',
-      width: 100,
-      render: (row) => row.facts?.length || 0
-    },
-    {
-      title: '操作',
-      key: 'actions',
-      width: 150,
-      fixed: 'right',
-      render: (row) => {
-        return [
-          h(
-            NButton,
-            {
-              text: true,
-              type: 'primary',
-              size: 'small',
-              onClick: () => viewDetail(row),
-              style: 'margin-right: 10px'
-            },
-            { default: () => '详情' }
-          ),
-          h(
-            NButton,
-            {
-              text: true,
-              type: 'error',
-              size: 'small',
-              onClick: () => deleteRecord(row)
-            },
-            { default: () => '删除' }
-          )
-        ]
-      }
-    }
-  )
-
-  return cols
-})
 
 onMounted(() => {
   loadHistory()
@@ -316,10 +270,41 @@ async function reproduceInference(record) {
 }
 </script>
 
+<script>
+// 为了在 template 中使用图标组件，需要在这里导出或者在 setup 中定义
+import { ArrowForwardOutline } from '@vicons/ionicons5'
+</script>
+
 <style scoped>
 .history-view {
-  max-width: 1400px;
-  margin: 0 auto;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.main-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.main-card :deep(.n-card__content) {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 0 !important;
+}
+
+.main-card :deep(.n-card__footer) {
+  flex-shrink: 0;
+}
+
+.history-list-container {
+  flex: 1;
+  overflow: hidden;
 }
 
 .header-actions {
@@ -327,23 +312,36 @@ async function reproduceInference(record) {
   gap: 10px;
 }
 
-.expand-content {
-  padding: 15px 20px;
-  background: rgba(0, 0, 0, 0.02);
+.item-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
-.expand-section {
-  margin-bottom: 10px;
+.item-time {
+  font-family: monospace;
+  color: var(--n-text-color-3);
 }
 
-.conclusion-text {
+.item-conclusion {
   font-weight: bold;
   color: var(--n-color-warning);
+}
+
+.item-content {
+  padding: 8px 0;
 }
 
 .no-data {
   opacity: 0.6;
   font-style: italic;
+}
+
+.pagination-container {
+  padding: 12px 24px;
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid var(--n-border-color);
 }
 
 .detail-section {
@@ -363,7 +361,7 @@ async function reproduceInference(record) {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
 }
 
 .path-step {

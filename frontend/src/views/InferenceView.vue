@@ -8,18 +8,14 @@
           <template #header-extra>
             <n-tag type="info">{{ rules.length }} 条</n-tag>
           </template>
-            <n-scrollbar style="max-height: 300px">
-              <div
-                v-for="(rule, index) in rules"
-                :key="index"
-                class="rule-item"
+          <n-scrollbar style="max-height: 300px">
+            <div v-for="(rule, index) in rules" :key="index" class="rule-item">
+              <n-tag size="small" type="primary">R{{ rule.id }}</n-tag>
+              <span class="rule-text"
+                >{{ rule.premises.join(" + ") }} → {{ rule.conclusion }}</span
               >
-                <n-tag size="small" type="primary">R{{ rule.id }}</n-tag>
-                <span class="rule-text"
-                  >{{ rule.premises.join(" + ") }} → {{ rule.conclusion }}</span
-                >
-              </div>
-            </n-scrollbar>
+            </div>
+          </n-scrollbar>
         </n-card>
 
         <!-- 事实管理 -->
@@ -29,54 +25,55 @@
               选择事实
             </n-button>
           </template>
-
-          <div class="facts-section">
-            <div class="section-title">已知事实：</div>
-            <div class="facts-tags">
-              <n-tag
-                v-for="fact in userFacts"
-                :key="fact"
-                closable
-                @close="removeFact(fact)"
-                type="success"
-                class="fact-tag"
-              >
-                {{ fact }}
-              </n-tag>
-              <n-tag
-                v-for="fact in derivedFacts"
-                :key="'d-' + fact"
-                type="warning"
-                class="fact-tag"
-              >
-                *{{ fact }}
-              </n-tag>
-              <span
-                v-if="!userFacts.length && !derivedFacts.length"
-                class="no-data"
-              >
-                暂无事实
-              </span>
+          <n-scrollbar style="max-height: 100px">
+            <div class="facts-section">
+              <div class="section-title">已知事实：</div>
+              <div class="facts-tags">
+                <n-tag
+                  v-for="fact in userFacts"
+                  :key="fact"
+                  closable
+                  @close="removeFact(fact)"
+                  type="success"
+                  class="fact-tag"
+                >
+                  {{ fact }}
+                </n-tag>
+                <n-tag
+                  v-for="fact in derivedFacts"
+                  :key="'d-' + fact"
+                  type="warning"
+                  class="fact-tag"
+                >
+                  *{{ fact }}
+                </n-tag>
+                <span
+                  v-if="!userFacts.length && !derivedFacts.length"
+                  class="no-data"
+                >
+                  暂无事实
+                </span>
+              </div>
             </div>
-          </div>
-
-          <div class="facts-section" style="margin-top: 15px">
-            <div class="section-title">已知为假：</div>
-            <div class="facts-tags">
-              <n-tag
-                v-for="fact in falseFacts"
-                :key="fact"
-                closable
-                @close="removeFalseFact(fact)"
-                type="error"
-                class="fact-tag"
-              >
-                {{ fact }}
-              </n-tag>
-              <span v-if="!falseFacts.length" class="no-data">暂无</span>
+          </n-scrollbar>
+          <n-scrollbar style="max-height: 100px">
+            <div class="facts-section" style="margin-top: 15px">
+              <div class="section-title">已知为假：</div>
+              <div class="facts-tags">
+                <n-tag
+                  v-for="fact in falseFacts"
+                  :key="fact"
+                  closable
+                  @close="removeFalseFact(fact)"
+                  type="error"
+                  class="fact-tag"
+                >
+                  {{ fact }}
+                </n-tag>
+                <span v-if="!falseFacts.length" class="no-data">暂无</span>
+              </div>
             </div>
-          </div>
-
+          </n-scrollbar>
           <n-button
             @click="clearAllFacts"
             type="error"
@@ -169,9 +166,7 @@
           <template #header-extra>
             <div class="step-controls">
               <n-button
-                
                 @click="toggleFullscreen"
-                
                 style="margin-right: 10px"
                 :title="isFullscreen ? '退出全屏' : '全屏'"
               >
@@ -215,12 +210,12 @@
             style="margin-top: 10px"
           />
 
-          <div class="explanation-box">
+          <n-scrollbar class="explanation-box" style="max-height: 20vh;">
             <div class="section-title">推理解释：</div>
             <div class="explanation-text">
               {{ currentExplanation || "暂无" }}
             </div>
-          </div>
+          </n-scrollbar>
         </n-card>
       </n-grid-item>
     </n-grid>
@@ -389,9 +384,11 @@ function refitNetwork() {
   nextTick(() => {
     requestAnimationFrame(() => {
       if (network) {
-        network.setSize('100%', '100%');
+        network.setSize("100%", "100%");
         network.redraw();
-        network.fit({ animation: { duration: 120, easingFunction: 'easeInOutQuad' } });
+        network.fit({
+          animation: { duration: 120, easingFunction: "easeInOutQuad" },
+        });
       }
     });
     setTimeout(() => {
@@ -931,7 +928,7 @@ function drawGraph() {
 .graph-container {
   flex: 1;
   min-height: 300px;
-  background: rgba(0, 0, 0, 0.05);
+  background: var(--n-action-color);
   border-radius: 4px;
   overflow: hidden;
   position: relative;
@@ -940,7 +937,7 @@ function drawGraph() {
 .explanation-box {
   margin-top: 15px;
   padding: 10px;
-  background: rgba(0, 0, 0, 0.05);
+  background: var(--n-action-color);
   border-radius: 4px;
   max-height: 100px;
   overflow-y: auto;
@@ -967,13 +964,13 @@ function drawGraph() {
 }
 
 .fact-select-list.selected {
-  background: rgba(0, 0, 0, 0.02);
+  background: var(--n-action-color);
 }
 
 .fact-select-item {
   padding: 8px 12px;
   margin: 4px 0;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--n-card-color);
   border: 1px solid var(--n-border-color);
   border-radius: 4px;
   cursor: pointer;

@@ -1,12 +1,11 @@
 <template>
-  <n-config-provider :locale="zhCN" :date-locale="dateZhCN" :theme="darkTheme">
+  <n-config-provider :locale="zhCN" :date-locale="dateZhCN" :theme="theme">
+    <n-global-style />
     <n-message-provider>
       <n-dialog-provider>
         <n-notification-provider>
           <n-loading-bar-provider>
-            <div class="app-container">
-              <router-view />
-            </div>
+            <router-view />
           </n-loading-bar-provider>
         </n-notification-provider>
       </n-dialog-provider>
@@ -15,11 +14,14 @@
 </template>
 
 <script setup>
-import { zhCN, dateZhCN, darkTheme } from 'naive-ui'
+import { computed } from 'vue'
+import { zhCN, dateZhCN, darkTheme, useOsTheme } from 'naive-ui'
+
+const osTheme = useOsTheme()
+const theme = computed(() => (osTheme.value === 'dark' ? darkTheme : null))
 </script>
 
 <style>
-/* 全局基础样式 - Element Plus 暗色模式会自动处理大部分组件 */
 * {
   margin: 0;
   padding: 0;
@@ -27,11 +29,7 @@ import { zhCN, dateZhCN, darkTheme } from 'naive-ui'
 }
 
 body {
-  font-family: 'Microsoft YaHei', sans-serif;
-  min-height: 100vh;
-}
-
-.app-container {
-  min-height: 100vh;
+  font-family: v-sans, v-mono, other-fallbacks;
+  -webkit-font-smoothing: antialiased;
 }
 </style>

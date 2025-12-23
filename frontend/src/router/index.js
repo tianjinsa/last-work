@@ -1,6 +1,9 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useUserStore } from '../stores/user'
+import { createDiscreteApi } from 'naive-ui'
 import api from '../api'
+
+const { loadingBar } = createDiscreteApi(['loadingBar'])
 
 const routes = [
   {
@@ -46,6 +49,7 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to, from, next) => {
+  loadingBar.start()
   const userStore = useUserStore()
   
   // 如果用户看起来已登录，但还没验证过 token，先验证
@@ -57,6 +61,7 @@ router.beforeEach(async (to, from, next) => {
       // token 无效，清除登录状态
       await userStore.logout()
       next('/login')
+      loadingBar.error()
       return
     }
   }
@@ -70,6 +75,10 @@ router.beforeEach(async (to, from, next) => {
   } else {
     next()
   }
+})
+
+router.afterEach(() => {
+  loadingBar.finish()
 })
 
 export default router

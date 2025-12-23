@@ -1,6 +1,6 @@
 <template>
   <div class="admin-view">
-    <n-tabs v-model:value="activeTab" type="line" animated>
+    <n-tabs v-model:value="activeTab" type="line" animated pane-style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
       <!-- 规则管理 -->
       <n-tab-pane name="rules" tab="规则管理">
         <n-card class="panel-card" title="知识库规则管理">
@@ -28,10 +28,12 @@
           </template>
           
           <n-data-table
+            flex-height
             :columns="rulesColumns"
             :data="rules"
             :loading="rulesLoading"
             :pagination="{ pageSize: 10 }"
+            style="height: 100%"
           />
         </n-card>
       </n-tab-pane>
@@ -49,10 +51,12 @@
           </template>
           
           <n-data-table
+            flex-height
             :columns="usersColumns"
             :data="users"
             :loading="usersLoading"
             :pagination="{ pageSize: 10 }"
+            style="height: 100%"
           />
         </n-card>
       </n-tab-pane>
@@ -78,10 +82,13 @@
           </template>
           
           <n-data-table
+            remote
+            flex-height
             :columns="historyColumns"
             :data="allHistory"
             :loading="historyLoading"
             :pagination="historyPagination"
+            style="height: 100%"
             @update:page="handleHistoryPageChange"
           />
         </n-card>
@@ -586,8 +593,44 @@ function formatTime(timestamp) {
 
 <style scoped>
 .admin-view {
-  max-width: 1400px;
-  margin: 0 auto;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.admin-view :deep(.n-tabs) {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-view :deep(.n-tabs-nav) {
+  flex-shrink: 0;
+}
+
+.admin-view :deep(.n-tabs-pane-wrapper) {
+  flex: 1;
+  overflow: hidden;
+}
+
+.admin-view :deep(.n-tab-pane) {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.panel-card :deep(.n-card__content) {
+  flex: 1;
+  overflow: hidden;
+  padding: 12px;
 }
 
 .header-actions {
