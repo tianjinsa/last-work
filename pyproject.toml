@@ -1,0 +1,15 @@
+[project]
+name = "expert-system"
+version = "1.0.0"
+description = "基于产生式知识表示的专家系统"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "flask>=2.3.0",
+    "flask-cors>=4.0.0",
+    "PyQt6>=6.5.0",
+    "PyQt6-WebEngine>=6.5.0",
+]
+
+[project.scripts]
+expert-system = "main:main"

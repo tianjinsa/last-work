@@ -1,9 +1,0 @@
-# Web 服务器依赖
-flask>=2.3.0
-flask-cors>=4.0.0
-
-# GUI 依赖（可选）
-PyQt6>=6.5.0
-PyQt6-WebEngine>=6.5.0
-
-pybind11>=2.10.0
