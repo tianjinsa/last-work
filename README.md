@@ -86,5 +86,5 @@ status, data, path = rr.step_backward("动物")
 ## 技术栈
 
 - 后端：Python 3.12+, Flask, PyQt6, cpp
-- 前端：Vue 3, Vite, Element Plus, vis-network
+- 前端：Vue 3, Vite, Naive UI, vis-network
 - 包管理：uv (Python), pnpm (Node.js)
