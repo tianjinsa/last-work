@@ -19,7 +19,7 @@ if getattr(sys, "frozen", False):
 else:
     _base = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-_static_folder = os.path.join(_base, "web_frontend", "dist")
+_static_folder = os.path.join(_base, "frontend", "dist")
 
 # 检查静态文件夹是否存在，不存在则使用空字符串（启动时会检查）
 if not os.path.exists(_static_folder):
@@ -243,6 +243,31 @@ def add_rule():
     return jsonify({"message": "规则添加成功", "id": len(rules) - 1})
 
 
+@app.route("/api/rules/batch", methods=["POST"])
+@require_admin
+def batch_add_rules():
+    """批量添加规则"""
+    data = request.json
+    new_rules = data.get("rules", [])
+
+    if not new_rules:
+        return jsonify({"error": "规则列表不能为空"}), 400
+
+    rules = storage.load_rules()
+    added_count = 0
+    for rule in new_rules:
+        premises = rule.get("premises", [])
+        conclusion = rule.get("conclusion", "")
+        if premises and conclusion:
+            rules.append((premises, conclusion))
+            added_count += 1
+
+    storage.save_rules(rules)
+    _reload_all_reasoner_sessions()
+
+    return jsonify({"message": f"成功添加 {added_count} 条规则"})
+
+
 @app.route("/api/rules/<int:rule_id>", methods=["PUT"])
 @require_admin
 def update_rule(rule_id):
@@ -342,6 +367,30 @@ def clear_facts():
     rs = get_reasoner_session(request.session)
     rs.reset_state()
     return jsonify({"message": "事实已清空"})
+
+
+@app.route("/api/facts/false", methods=["GET"])
+@require_auth
+def get_false_facts():
+    """获取已知为假的事实"""
+    rs = get_reasoner_session(request.session)
+    return jsonify({"facts": rs.false_facts})
+
+
+@app.route("/api/facts/false", methods=["POST"])
+@require_auth
+def set_false_facts():
+    """设置已知为假的事实"""
+    data = request.json
+    facts = data.get("facts", [])
+    rs = get_reasoner_session(request.session)
+
+    rs.false_facts = facts
+    rs.reasoner.clear_false()
+    if facts:
+        rs.reasoner.add_false(facts)
+
+    return jsonify({"message": "事实已更新"})
 
 
 # ========== 推理 API ==========
@@ -617,7 +666,7 @@ def start_server(host: str = "0.0.0.0", port: int = 5000) -> tuple[bool, str]:
         return False, "服务器已在运行中"
 
     if not os.path.exists(app.static_folder):
-        return False, "前端未构建，请先在 web_frontend 目录执行 pnpm build"
+        return False, "前端未构建，请先在 frontend 目录执行 pnpm build"
 
     def run_server():
         global _server_running

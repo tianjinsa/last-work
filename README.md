@@ -33,7 +33,7 @@ uv run python main.py --web --port 8080
 ## 首次使用 Web 版
 
 ```bash
-cd web_frontend
+cd frontend
 pnpm install
 pnpm build
 cd ..
@@ -57,7 +57,7 @@ cd ..
 │   │   └── main_window.py  # 主窗口
 │   └── web/                # Web 服务器
 │       └── server.py       # Flask API
-├── web_frontend/           # Vue3 前端
+├── frontend/               # Vue3 前端
 ├── pyproject.toml          # 项目配置
 └── rules.json              # 规则库
 ```
