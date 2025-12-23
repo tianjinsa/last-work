@@ -9,7 +9,7 @@ dist/
 # 虚拟环境
 .venv/
 venv/
-
+build/
 # uv
 uv.lock
 
@@ -49,3 +49,4 @@ Thumbs.db
 *.temp
 *.bak
 frontend/pnpm-lock.yaml
+rgzn.spec
