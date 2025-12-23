@@ -205,11 +205,12 @@ void Rule_reasoner::clear_false()
 
 tuple<int, vector<string>, vector<int>> Rule_reasoner::step_backward(string target_name)
 {
+    // 返回: 状态 (0: 成功, 1: 失败, 2: 询问), 数据 (名字或名字列表), 路径 (规则id列表)
     int target_id = get_name_id(target_name);
     reasoner_path.clear();
     reasoner_set.clear();
 
-    if (in_backward != target_id)
+    if (in_backward != target_id)// 新的目标，重置栈
     {
         while (!bw_stack.empty())
             bw_stack.pop();
@@ -217,7 +218,7 @@ tuple<int, vector<string>, vector<int>> Rule_reasoner::step_backward(string targ
         in_backward = target_id;
     }
 
-    while (!bw_stack.empty())
+    while (!bw_stack.empty())// 开始反向推理
     {
         BackwardFrame &top = bw_stack.top();
         int u = top.u;
@@ -270,25 +271,25 @@ tuple<int, vector<string>, vector<int>> Rule_reasoner::step_backward(string targ
             }
         }
 
-        if (!rule_possible)
+        if (!rule_possible)// 该规则不通，尝试下一条规则
         {
             top.rule_idx++;
             continue;
         }
 
-        if (subgoal != -1)
+        if (subgoal != -1)// 有子目标，继续深入
         {
             bw_stack.push({subgoal, 0});
             continue;
         }
 
-        if (!to_ask.empty())
+        if (!to_ask.empty())// 需要询问用户
         {
             return {2, to_ask, reasoner_path};
         }
 
         known_set.insert(u);
-        if (reasoner_set.count(line_id) == 0)
+        if (reasoner_set.count(line_id) == 0)// 记录推理路径
         {
             reasoner_path.push_back(line_id);
             reasoner_set.insert(line_id);
@@ -297,7 +298,7 @@ tuple<int, vector<string>, vector<int>> Rule_reasoner::step_backward(string targ
     }
 
     in_backward = -1;
-    if (known_set.count(target_id))
+    if (known_set.count(target_id))// 推理成功
         return {0, {target_name}, reasoner_path};
     return {1, {}, reasoner_path};
 }
