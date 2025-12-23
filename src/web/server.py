@@ -28,6 +28,14 @@ if not os.path.exists(_static_folder):
 app = Flask(__name__, static_folder=_static_folder, static_url_path="")
 CORS(app)
 
+# 路由处理：SPA 支持
+@app.route("/", defaults={"path": ""})
+@app.route("/<path:path>")
+def serve(path):
+    if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
+        return send_from_directory(app.static_folder, path)
+    return send_from_directory(app.static_folder, "index.html")
+
 # 服务器运行状态
 _server_thread = None
 _server_running = False

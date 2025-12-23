@@ -152,11 +152,15 @@
       
       <!-- 右侧：可视化 -->
       <el-col :span="8">
-        <el-card class="panel-card viz-card">
+        <el-card class="panel-card viz-card" :class="{ 'fullscreen': isFullscreen }">
           <template #header>
             <div class="card-header">
               <span>推理过程可视化</span>
               <div class="step-controls">
+                <el-button size="small" @click="toggleFullscreen" circle style="margin-right: 10px;" :title="isFullscreen ? '退出全屏' : '全屏'">
+                  <el-icon v-if="isFullscreen"><Close /></el-icon>
+                  <el-icon v-else><FullScreen /></el-icon>
+                </el-button>
                 <el-button size="small" :disabled="currentStep <= 0" @click="prevStep">
                   <el-icon><ArrowLeft /></el-icon>
                 </el-button>
@@ -272,6 +276,7 @@ const resultMessage = ref('')
 
 // 可视化状态
 const graphContainer = ref(null)
+const isFullscreen = ref(false)
 const pathAll = ref([])
 const currentStep = ref(0)
 const totalSteps = computed(() => pathAll.value.length)
@@ -301,6 +306,16 @@ const selectedQueryFacts = ref([])
 const queryProcessing = ref(false)
 let lastDialogCloseTime = 0
 const MIN_DIALOG_INTERVAL = 500 // 最小对话框打开间隔(ms)
+
+function toggleFullscreen() {
+  isFullscreen.value = !isFullscreen.value
+  // 等待 DOM 更新后重新适应画布
+  nextTick(() => {
+    if (network) {
+      network.fit()
+    }
+  })
+}
 
 // 初始化
 onMounted(async () => {
@@ -848,6 +863,36 @@ function drawGraph() {
   transition: all 0.2s;
   color: var(--el-text-color-regular);
 }
+
+/* 全屏模式 */
+.viz-card.fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 2000;
+  margin: 0 !important;
+  border-radius: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.viz-card.fullscreen :deep(.el-card__body) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 20px;
+  overflow: hidden;
+}
+
+.viz-card.fullscreen .graph-container {
+  flex: 1;
+  height: auto;
+  min-height: 0;
+}
+
 
 .fact-select-item:hover {
   background: var(--el-color-primary-light-3);
